@@ -1,0 +1,12 @@
+bin/
+.env
+.vscode/
+
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+go.work
+go.work.sum
