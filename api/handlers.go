@@ -73,6 +73,23 @@ func (s *APIServer) createDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) deleteDevice(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id <= 0 {
+		http.Error(w, "device id must be a positive integer", http.StatusBadRequest)
+		return
+	}
+
+	err = s.deviceRepo.DeleteDeviceByID(r.Context(), id)
+	if errors.Is(err, repos.ErrNotFound) {
+		http.Error(w, "device not found", http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
