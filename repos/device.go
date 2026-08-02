@@ -6,6 +6,7 @@ import (
 
 	"github.com/N30A/trakt/models"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -100,4 +101,25 @@ func (r *DeviceRepo) DeleteDeviceByID(ctx context.Context, deviceID int) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+func (r *DeviceRepo) AddDevice(ctx context.Context, newDevice models.Device) (models.Device, error) {
+	query := `
+		INSERT INTO devices (unique_id, name)
+		VALUES ($1, $2)
+		RETURNING id, unique_id, name;
+	`
+	var device models.Device
+	err := r.pool.QueryRow(ctx, query, newDevice.UniqueID, newDevice.Name).Scan(
+		&device.ID, &device.UniqueID, &device.Name,
+	)
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+		return models.Device{}, ErrConflict
+	}
+
+	if err != nil {
+		return models.Device{}, ErrInternal
+	}
+
+	return device, nil
 }

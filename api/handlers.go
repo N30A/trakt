@@ -1,11 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/N30A/trakt/models"
 	"github.com/N30A/trakt/repos"
@@ -18,7 +19,7 @@ func (s *APIServer) registerRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("GET /devices", s.getDevices)
 	mux.HandleFunc("GET /devices/{id}", s.getDevice)
-	mux.HandleFunc("POST /devices/{id}", s.createDevice)
+	mux.HandleFunc("POST /devices", s.createDevice)
 	mux.HandleFunc("DELETE /devices/{id}", s.deleteDevice)
 
 	mux.HandleFunc("GET /positions", s.getPositions)
@@ -69,7 +70,36 @@ func (s *APIServer) getDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) createDevice(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	var request createDeviceRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "malformed request", http.StatusBadRequest)
+		return
+	}
+
+	uniqueID := strings.TrimSpace(request.UniqueID)
+	name := strings.TrimSpace(request.Name)
+
+	if uniqueID == "" || name == "" {
+		http.Error(w, "unique_id or name must not be empty", http.StatusBadRequest)
+		return
+	}
+
+	device, err := s.deviceRepo.AddDevice(r.Context(), models.Device{UniqueID: uniqueID, Name: name})
+	if err != nil {
+		if errors.Is(err, repos.ErrConflict) {
+			http.Error(w, "device already exists", http.StatusConflict)
+			return
+		}
+
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, deviceResponse{
+		ID:       device.ID,
+		UniqueID: device.UniqueID,
+		Name:     device.Name,
+	})
 }
 
 func (s *APIServer) deleteDevice(w http.ResponseWriter, r *http.Request) {
@@ -91,39 +121,6 @@ func (s *APIServer) deleteDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func parseDeviceIDQuery(r *http.Request) (int, bool, error) {
-	value := r.URL.Query().Get("deviceid")
-	if value == "" {
-		return 0, false, nil
-	}
-	id, err := strconv.Atoi(value)
-	if err != nil || id <= 0 {
-		return 0, true, errors.New("device id must be a positive integer")
-	}
-	return id, true, nil
-}
-
-func parseTimeRange(r *http.Request) (time.Time, time.Time, error) {
-	fromStr := r.URL.Query().Get("from")
-	toStr := r.URL.Query().Get("to")
-
-	if fromStr == "" || toStr == "" {
-		return time.Time{}, time.Time{}, errors.New("from and to are required")
-	}
-
-	from, err := time.Parse(time.RFC3339, fromStr)
-	if err != nil {
-		return time.Time{}, time.Time{}, errors.New("from must be a valid RFC3339 timestamp")
-	}
-
-	to, err := time.Parse(time.RFC3339, toStr)
-	if err != nil {
-		return time.Time{}, time.Time{}, errors.New("to must be a valid RFC3339 timestamp")
-	}
-
-	return from, to, nil
 }
 
 func (s *APIServer) getPositions(w http.ResponseWriter, r *http.Request) {
