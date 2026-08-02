@@ -27,11 +27,11 @@ func (r *DeviceRepo) GetDeviceByID(ctx context.Context, deviceID int) (models.De
 	var device models.Device
 
 	err := r.pool.QueryRow(ctx, query, deviceID).Scan(&device.ID, &device.UniqueID, &device.Name)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Device{}, ErrNotFound
-		}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.Device{}, ErrNotFound
+	}
 
+	if err != nil {
 		return models.Device{}, ErrInternal
 	}
 
@@ -48,11 +48,11 @@ func (r *DeviceRepo) GetDeviceByUniqueID(ctx context.Context, uniqueID string) (
 	var device models.Device
 
 	err := r.pool.QueryRow(ctx, query, uniqueID).Scan(&device.ID, &device.UniqueID, &device.Name)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Device{}, ErrNotFound
-		}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.Device{}, ErrNotFound
+	}
 
+	if err != nil {
 		return models.Device{}, ErrInternal
 	}
 

@@ -51,12 +51,12 @@ func (s *APIServer) getDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	device, err := s.deviceRepo.GetDeviceByID(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			http.Error(w, "device not found", http.StatusNotFound)
-			return
-		}
+	if errors.Is(err, repos.ErrNotFound) {
+		http.Error(w, "device not found", http.StatusNotFound)
+		return
+	}
 
+	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -130,12 +130,12 @@ func (s *APIServer) getPositions(w http.ResponseWriter, r *http.Request) {
 		positions, err = s.positionRepo.GetPositions(r.Context(), from, to)
 	}
 
-	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			http.Error(w, "device not found", http.StatusNotFound)
-			return
-		}
+	if errors.Is(err, repos.ErrNotFound) {
+		http.Error(w, "device not found", http.StatusNotFound)
+		return
+	}
 
+	if err != nil {
 		log.Printf("failed to retrieve positions: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
