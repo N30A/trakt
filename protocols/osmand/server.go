@@ -73,13 +73,13 @@ func (s *OsmandServer) handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	device, err := s.deviceRepo.GetDeviceByUniqueID(r.Context(), parsed.DeviceUniqueID)
-	if errors.Is(err, repos.ErrNotFound) {
-		log.Printf("unknown osmand device: %s", parsed.DeviceUniqueID)
-		http.Error(w, "unknown device", http.StatusUnauthorized)
-		return
-	}
-
 	if err != nil {
+		if errors.Is(err, repos.ErrNotFound) {
+			log.Printf("unknown osmand device: %s", parsed.DeviceUniqueID)
+			http.Error(w, "unknown device", http.StatusUnauthorized)
+			return
+		}
+
 		log.Printf("failed to get device %s: %v", parsed.DeviceUniqueID, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
