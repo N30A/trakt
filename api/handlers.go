@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/N30A/trakt/models"
@@ -20,6 +19,7 @@ func (s *APIServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /devices", s.getDevices)
 	mux.HandleFunc("GET /devices/{id}", s.getDevice)
 	mux.HandleFunc("POST /devices", s.createDevice)
+	mux.HandleFunc("PUT /devices/{id}", s.updateDevice)
 	mux.HandleFunc("DELETE /devices/{id}", s.deleteDevice)
 
 	mux.HandleFunc("GET /positions", s.getPositions)
@@ -45,9 +45,9 @@ func (s *APIServer) getDevices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) getDevice(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id <= 0 {
-		http.Error(w, "device id must be a positive integer", http.StatusBadRequest)
+	id, err := parseDeviceIDPath(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (s *APIServer) getDevice(w http.ResponseWriter, r *http.Request) {
 func (s *APIServer) createDevice(w http.ResponseWriter, r *http.Request) {
 	var request createDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "malformed request", http.StatusBadRequest)
+		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
 
@@ -80,7 +80,7 @@ func (s *APIServer) createDevice(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(request.Name)
 
 	if uniqueID == "" || name == "" {
-		http.Error(w, "unique_id or name must not be empty", http.StatusBadRequest)
+		http.Error(w, "unique_id and name must not be empty", http.StatusBadRequest)
 		return
 	}
 
@@ -102,10 +102,49 @@ func (s *APIServer) createDevice(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *APIServer) updateDevice(w http.ResponseWriter, r *http.Request) {
+	id, err := parseDeviceIDPath(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var request updateDeviceRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	uniqueID := strings.TrimSpace(request.UniqueID)
+	name := strings.TrimSpace(request.Name)
+
+	if uniqueID == "" || name == "" {
+		http.Error(w, "unique_id and name must not be empty", http.StatusBadRequest)
+		return
+	}
+
+	device, err := s.deviceRepo.UpdateDevice(r.Context(), models.Device{ID: id, UniqueID: uniqueID, Name: name})
+	if err != nil {
+		if errors.Is(err, repos.ErrNotFound) {
+			http.Error(w, "device not found", http.StatusNotFound)
+			return
+		}
+
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, deviceResponse{
+		ID:       device.ID,
+		UniqueID: device.UniqueID,
+		Name:     device.Name,
+	})
+}
+
 func (s *APIServer) deleteDevice(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id <= 0 {
-		http.Error(w, "device id must be a positive integer", http.StatusBadRequest)
+	id, err := parseDeviceIDPath(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

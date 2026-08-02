@@ -26,3 +26,8 @@ type createDeviceRequest struct {
 	UniqueID string `json:"unique_id"`
 	Name     string `json:"name"`
 }
+
+type updateDeviceRequest struct {
+	UniqueID string `json:"unique_id"`
+	Name     string `json:"name"`
+}

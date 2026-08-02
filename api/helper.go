@@ -30,6 +30,14 @@ func parseDeviceIDQuery(r *http.Request) (int, bool, error) {
 	return id, true, nil
 }
 
+func parseDeviceIDPath(r *http.Request) (int, error) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id <= 0 {
+		return 0, errors.New("device id must be a positive integer")
+	}
+	return id, nil
+}
+
 func parseTimeRange(r *http.Request) (time.Time, time.Time, error) {
 	fromStr := r.URL.Query().Get("from")
 	toStr := r.URL.Query().Get("to")

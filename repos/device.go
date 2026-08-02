@@ -113,11 +113,33 @@ func (r *DeviceRepo) AddDevice(ctx context.Context, newDevice models.Device) (mo
 	err := r.pool.QueryRow(ctx, query, newDevice.UniqueID, newDevice.Name).Scan(
 		&device.ID, &device.UniqueID, &device.Name,
 	)
-	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-		return models.Device{}, ErrConflict
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			return models.Device{}, ErrConflict
+		}
+
+		return models.Device{}, ErrInternal
 	}
 
+	return device, nil
+}
+
+func (r *DeviceRepo) UpdateDevice(ctx context.Context, updatedDevice models.Device) (models.Device, error) {
+	query := `
+		UPDATE devices
+		SET unique_id = $1, name = $2
+		WHERE id = $3
+		RETURNING id, unique_id, name;
+	`
+	var device models.Device
+	err := r.pool.QueryRow(ctx, query, updatedDevice.UniqueID, updatedDevice.Name, updatedDevice.ID).Scan(
+		&device.ID, &device.UniqueID, &device.Name,
+	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.Device{}, ErrNotFound
+		}
+
 		return models.Device{}, ErrInternal
 	}
 
