@@ -2,8 +2,6 @@ package repos
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/N30A/trakt/models"
@@ -40,7 +38,7 @@ func (r *PositionRepo) AddPosition(ctx context.Context, position models.Position
 		position.Accuracy,
 	)
 	if err != nil {
-		return fmt.Errorf("unable to add position: %w", errors.Join(ErrInternal, err))
+		return ErrInternal
 	}
 
 	return nil
@@ -58,7 +56,7 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 
 	rows, err := r.pool.Query(ctx, query, deviceID, from, to)
 	if err != nil {
-		return nil, errors.Join(ErrInternal, err)
+		return nil, ErrInternal
 	}
 	defer rows.Close()
 
@@ -72,7 +70,7 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 			&position.FixTime, &position.ServerTime, &position.Protocol, &position.Altitude,
 			&position.Speed, &position.Course, &position.Accuracy,
 		); err != nil {
-			return nil, errors.Join(ErrInternal, err)
+			return nil, ErrInternal
 		}
 
 		positions = append(positions, position)
@@ -93,7 +91,7 @@ func (r *PositionRepo) GetPositions(ctx context.Context, from, to time.Time) ([]
 
 	rows, err := r.pool.Query(ctx, query, from, to)
 	if err != nil {
-		return nil, errors.Join(ErrInternal, err)
+		return nil, ErrInternal
 	}
 	defer rows.Close()
 
@@ -107,7 +105,7 @@ func (r *PositionRepo) GetPositions(ctx context.Context, from, to time.Time) ([]
 			&position.FixTime, &position.ServerTime, &position.Protocol, &position.Altitude,
 			&position.Speed, &position.Course, &position.Accuracy,
 		); err != nil {
-			return nil, errors.Join(ErrInternal, err)
+			return nil, ErrInternal
 		}
 
 		positions = append(positions, position)

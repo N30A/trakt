@@ -29,10 +29,10 @@ func (r *DeviceRepo) GetDeviceByID(ctx context.Context, deviceID int) (models.De
 	err := r.pool.QueryRow(ctx, query, deviceID).Scan(&device.ID, &device.UniqueID, &device.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Device{}, errors.Join(ErrNotFound, err)
+			return models.Device{}, ErrNotFound
 		}
 
-		return models.Device{}, errors.Join(ErrInternal, err)
+		return models.Device{}, ErrInternal
 	}
 
 	return device, nil
@@ -50,10 +50,10 @@ func (r *DeviceRepo) GetDeviceByUniqueID(ctx context.Context, uniqueID string) (
 	err := r.pool.QueryRow(ctx, query, uniqueID).Scan(&device.ID, &device.UniqueID, &device.Name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Device{}, errors.Join(ErrNotFound, err)
+			return models.Device{}, ErrNotFound
 		}
 
-		return models.Device{}, errors.Join(ErrInternal, err)
+		return models.Device{}, ErrInternal
 	}
 
 	return device, nil
@@ -68,7 +68,7 @@ func (r *DeviceRepo) GetDevices(ctx context.Context) ([]models.Device, error) {
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, errors.Join(ErrInternal, err)
+		return nil, ErrInternal
 	}
 	defer rows.Close()
 
@@ -78,7 +78,7 @@ func (r *DeviceRepo) GetDevices(ctx context.Context) ([]models.Device, error) {
 		var device models.Device
 
 		if err := rows.Scan(&device.ID, &device.UniqueID, &device.Name); err != nil {
-			return nil, errors.Join(ErrInternal, err)
+			return nil, ErrInternal
 		}
 
 		devices = append(devices, device)
@@ -94,7 +94,7 @@ func (r *DeviceRepo) DeleteDeviceByID(ctx context.Context, deviceID int) error {
 	`
 	tag, err := r.pool.Exec(ctx, query, deviceID)
 	if err != nil {
-		return errors.Join(ErrInternal, err)
+		return ErrInternal
 	}
 	if tag.RowsAffected() == 0 {
 		return ErrNotFound
