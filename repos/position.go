@@ -2,9 +2,11 @@ package repos
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/N30A/trakt/models"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -109,6 +111,56 @@ func (r *PositionRepo) GetPositions(ctx context.Context, from, to time.Time) ([]
 		}
 
 		positions = append(positions, position)
+	}
+
+	return positions, nil
+}
+
+func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID int) (models.Position, error) {
+	query := `
+		SELECT
+		    id, device_id, latitude, longitude, fix_time,
+		    server_time, protocol, altitude, speed, course, accuracy
+		FROM positions
+		WHERE device_id = $1
+		ORDER BY fix_time DESC
+		LIMIT 1;
+	`
+
+	rows, err := r.pool.Query(ctx, query, deviceID)
+	if err != nil {
+		return models.Position{}, nil
+	}
+
+	position, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByPos[models.Position])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.Position{}, ErrNotFound
+		}
+
+		return models.Position{}, ErrInternal
+	}
+
+	return position, nil
+}
+
+func (r *PositionRepo) GetLatestPositions(ctx context.Context) ([]models.Position, error) {
+	query := `
+		SELECT DISTINCT ON (device_id)
+	    id, device_id, latitude, longitude, fix_time,
+	    server_time, protocol, altitude, speed, course, accuracy
+		FROM positions
+		ORDER BY device_id, fix_time DESC;
+	`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, ErrInternal
+	}
+
+	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
+	if err != nil {
+		return nil, ErrInternal
 	}
 
 	return positions, nil
