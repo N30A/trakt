@@ -1,11 +1,9 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/N30A/trakt/models"
 	"github.com/N30A/trakt/repos"
@@ -16,150 +14,15 @@ func (s *APIServer) registerRoutes(mux *http.ServeMux) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mux.HandleFunc("GET /devices", s.getDevices)
-	mux.HandleFunc("GET /devices/{id}", s.getDevice)
-	mux.HandleFunc("POST /devices", s.createDevice)
-	mux.HandleFunc("PUT /devices/{id}", s.updateDevice)
-	mux.HandleFunc("DELETE /devices/{id}", s.deleteDevice)
+	deviceHandler := newDeviceHandler(s.deviceRepo)
+
+	mux.HandleFunc("GET /devices", deviceHandler.getDevices)
+	mux.HandleFunc("GET /devices/{id}", deviceHandler.getDevice)
+	mux.HandleFunc("POST /devices", deviceHandler.createDevice)
+	mux.HandleFunc("PUT /devices/{id}", deviceHandler.updateDevice)
+	mux.HandleFunc("DELETE /devices/{id}", deviceHandler.deleteDevice)
 
 	mux.HandleFunc("GET /positions", s.getPositions)
-}
-
-func (s *APIServer) getDevices(w http.ResponseWriter, r *http.Request) {
-	devices, err := s.deviceRepo.GetDevices(r.Context())
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	response := make([]deviceResponse, len(devices))
-	for i, device := range devices {
-		response[i] = deviceResponse{
-			ID:       device.ID,
-			UniqueID: device.UniqueID,
-			Name:     device.Name,
-		}
-	}
-
-	writeJSON(w, http.StatusOK, response)
-}
-
-func (s *APIServer) getDevice(w http.ResponseWriter, r *http.Request) {
-	id, err := parseDeviceIDPath(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	device, err := s.deviceRepo.GetDeviceByID(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			http.Error(w, "device not found", http.StatusNotFound)
-			return
-		}
-
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, deviceResponse{
-		ID:       device.ID,
-		UniqueID: device.UniqueID,
-		Name:     device.Name,
-	})
-}
-
-func (s *APIServer) createDevice(w http.ResponseWriter, r *http.Request) {
-	var request createDeviceRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	uniqueID := strings.TrimSpace(request.UniqueID)
-	name := strings.TrimSpace(request.Name)
-
-	if uniqueID == "" || name == "" {
-		http.Error(w, "unique_id and name must not be empty", http.StatusBadRequest)
-		return
-	}
-
-	device, err := s.deviceRepo.AddDevice(r.Context(), models.Device{UniqueID: uniqueID, Name: name})
-	if err != nil {
-		if errors.Is(err, repos.ErrConflict) {
-			http.Error(w, "device already exists", http.StatusConflict)
-			return
-		}
-
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	writeJSON(w, http.StatusCreated, deviceResponse{
-		ID:       device.ID,
-		UniqueID: device.UniqueID,
-		Name:     device.Name,
-	})
-}
-
-func (s *APIServer) updateDevice(w http.ResponseWriter, r *http.Request) {
-	id, err := parseDeviceIDPath(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var request updateDeviceRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	uniqueID := strings.TrimSpace(request.UniqueID)
-	name := strings.TrimSpace(request.Name)
-
-	if uniqueID == "" || name == "" {
-		http.Error(w, "unique_id and name must not be empty", http.StatusBadRequest)
-		return
-	}
-
-	device, err := s.deviceRepo.UpdateDevice(r.Context(), models.Device{ID: id, UniqueID: uniqueID, Name: name})
-	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			http.Error(w, "device not found", http.StatusNotFound)
-			return
-		}
-
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, deviceResponse{
-		ID:       device.ID,
-		UniqueID: device.UniqueID,
-		Name:     device.Name,
-	})
-}
-
-func (s *APIServer) deleteDevice(w http.ResponseWriter, r *http.Request) {
-	id, err := parseDeviceIDPath(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = s.deviceRepo.DeleteDeviceByID(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			http.Error(w, "device not found", http.StatusNotFound)
-			return
-		}
-
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *APIServer) getPositions(w http.ResponseWriter, r *http.Request) {
