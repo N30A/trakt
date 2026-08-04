@@ -60,22 +60,10 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 	if err != nil {
 		return nil, ErrInternal
 	}
-	defer rows.Close()
 
-	var positions []models.Position
-
-	for rows.Next() {
-		var position models.Position
-
-		if err := rows.Scan(
-			&position.ID, &position.DeviceID, &position.Latitude, &position.Longitude,
-			&position.FixTime, &position.ServerTime, &position.Protocol, &position.Altitude,
-			&position.Speed, &position.Course, &position.Accuracy,
-		); err != nil {
-			return nil, ErrInternal
-		}
-
-		positions = append(positions, position)
+	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
+	if err != nil {
+		return nil, ErrInternal
 	}
 
 	return positions, nil

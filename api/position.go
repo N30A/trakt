@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/N30A/trakt/models"
@@ -25,27 +24,33 @@ func (h *positionHandler) getPositions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !hasDeviceID {
+		http.Error(w, "deviceid is required", http.StatusBadRequest)
+		return
+	}
+
 	from, to, err := parseTimeRange(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var positions []models.Position
-
-	if hasDeviceID {
-		positions, err = h.repo.GetPositionsByDevice(r.Context(), deviceID, from, to)
-	} else {
-		positions, err = h.repo.GetPositions(r.Context(), from, to)
-	}
-
+	device, err := h.deviceRepo.GetDeviceByID(r.Context(), deviceID)
 	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			http.Error(w, "device not found", http.StatusNotFound)
+		switch {
+		case errors.Is(err, repos.ErrNotFound):
+			http.Error(w, "device not found", http.StatusInternalServerError)
+			return
+		default:
+			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+	}
 
-		log.Printf("failed to retrieve positions: %v", err)
+	var positions []models.Position
+
+	positions, err = h.repo.GetPositionsByDevice(r.Context(), device.ID, from, to)
+	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
