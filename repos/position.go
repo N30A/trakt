@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/N30A/trakt/models"
@@ -40,7 +41,7 @@ func (r *PositionRepo) AddPosition(ctx context.Context, position models.Position
 		position.Accuracy,
 	)
 	if err != nil {
-		return ErrInternal
+		return fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return nil
@@ -58,12 +59,12 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 
 	rows, err := r.pool.Query(ctx, query, deviceID, from, to)
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return positions, nil
@@ -80,12 +81,12 @@ func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]models.Position, 
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return positions, nil
@@ -104,16 +105,16 @@ func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID i
 
 	rows, err := r.pool.Query(ctx, query, deviceID)
 	if err != nil {
-		return models.Position{}, nil
+		return models.Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	position, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByPos[models.Position])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Position{}, ErrNotFound
+			return models.Position{}, fmt.Errorf("%w: %v", ErrNotFound, err)
 		}
 
-		return models.Position{}, ErrInternal
+		return models.Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return position, nil
@@ -130,12 +131,12 @@ func (r *PositionRepo) GetLatestPositions(ctx context.Context) ([]models.Positio
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return positions, nil

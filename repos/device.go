@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/N30A/trakt/models"
 	"github.com/jackc/pgx/v5"
@@ -69,12 +70,12 @@ func (r *DeviceRepo) GetDevices(ctx context.Context) ([]models.Device, error) {
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	devices, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Device])
 	if err != nil {
-		return nil, ErrInternal
+		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return devices, nil
@@ -88,10 +89,10 @@ func (r *DeviceRepo) DeleteDeviceByID(ctx context.Context, deviceID int) error {
 
 	tag, err := r.pool.Exec(ctx, query, deviceID)
 	if err != nil {
-		return ErrInternal
+		return fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 	if tag.RowsAffected() == 0 {
-		return ErrNotFound
+		return fmt.Errorf("%w: %v", ErrNotFound, err)
 	}
 	return nil
 }
@@ -108,10 +109,10 @@ func (r *DeviceRepo) AddDevice(ctx context.Context, newDevice models.Device) (mo
 		&device.ID, &device.UniqueID, &device.Name,
 	); err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return models.Device{}, ErrConflict
+			return models.Device{}, fmt.Errorf("%w: %v", ErrConflict, err)
 		}
 
-		return models.Device{}, ErrInternal
+		return models.Device{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return device, nil
@@ -130,10 +131,10 @@ func (r *DeviceRepo) UpdateDevice(ctx context.Context, updatedDevice models.Devi
 		&device.ID, &device.UniqueID, &device.Name,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Device{}, ErrNotFound
+			return models.Device{}, fmt.Errorf("%w: %v", ErrNotFound, err)
 		}
 
-		return models.Device{}, ErrInternal
+		return models.Device{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return device, nil
