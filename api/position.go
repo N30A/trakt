@@ -39,7 +39,7 @@ func (h *positionHandler) getPositions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, repos.ErrNotFound):
-			http.Error(w, "device not found", http.StatusInternalServerError)
+			http.Error(w, "device not found", http.StatusNotFound)
 			return
 		default:
 			http.Error(w, "internal error", http.StatusInternalServerError)
