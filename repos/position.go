@@ -69,36 +69,23 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 	return positions, nil
 }
 
-func (r *PositionRepo) GetPositions(ctx context.Context, from, to time.Time) ([]models.Position, error) {
+func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]models.Position, error) {
 	query := `
 		SELECT
 		    id, device_id, latitude, longitude, fix_time,
 		    server_time, protocol, altitude, speed, course, accuracy
 		FROM positions
-		WHERE fix_time >= $1 AND fix_time <= $2
 		ORDER BY fix_time ASC;
 	`
 
-	rows, err := r.pool.Query(ctx, query, from, to)
+	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, ErrInternal
 	}
-	defer rows.Close()
 
-	var positions []models.Position
-
-	for rows.Next() {
-		var position models.Position
-
-		if err := rows.Scan(
-			&position.ID, &position.DeviceID, &position.Latitude, &position.Longitude,
-			&position.FixTime, &position.ServerTime, &position.Protocol, &position.Altitude,
-			&position.Speed, &position.Course, &position.Accuracy,
-		); err != nil {
-			return nil, ErrInternal
-		}
-
-		positions = append(positions, position)
+	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
+	if err != nil {
+		return nil, ErrInternal
 	}
 
 	return positions, nil

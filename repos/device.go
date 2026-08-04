@@ -71,18 +71,10 @@ func (r *DeviceRepo) GetDevices(ctx context.Context) ([]models.Device, error) {
 	if err != nil {
 		return nil, ErrInternal
 	}
-	defer rows.Close()
 
-	var devices []models.Device
-
-	for rows.Next() {
-		var device models.Device
-
-		if err := rows.Scan(&device.ID, &device.UniqueID, &device.Name); err != nil {
-			return nil, ErrInternal
-		}
-
-		devices = append(devices, device)
+	devices, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Device])
+	if err != nil {
+		return nil, ErrInternal
 	}
 
 	return devices, nil
@@ -93,6 +85,7 @@ func (r *DeviceRepo) DeleteDeviceByID(ctx context.Context, deviceID int) error {
 		DELETE FROM devices
 		WHERE id = $1;
 	`
+
 	tag, err := r.pool.Exec(ctx, query, deviceID)
 	if err != nil {
 		return ErrInternal
@@ -109,11 +102,11 @@ func (r *DeviceRepo) AddDevice(ctx context.Context, newDevice models.Device) (mo
 		VALUES ($1, $2)
 		RETURNING id, unique_id, name;
 	`
+
 	var device models.Device
-	err := r.pool.QueryRow(ctx, query, newDevice.UniqueID, newDevice.Name).Scan(
+	if err := r.pool.QueryRow(ctx, query, newDevice.UniqueID, newDevice.Name).Scan(
 		&device.ID, &device.UniqueID, &device.Name,
-	)
-	if err != nil {
+	); err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
 			return models.Device{}, ErrConflict
 		}
@@ -131,11 +124,11 @@ func (r *DeviceRepo) UpdateDevice(ctx context.Context, updatedDevice models.Devi
 		WHERE id = $3
 		RETURNING id, unique_id, name;
 	`
+
 	var device models.Device
-	err := r.pool.QueryRow(ctx, query, updatedDevice.UniqueID, updatedDevice.Name, updatedDevice.ID).Scan(
+	if err := r.pool.QueryRow(ctx, query, updatedDevice.UniqueID, updatedDevice.Name, updatedDevice.ID).Scan(
 		&device.ID, &device.UniqueID, &device.Name,
-	)
-	if err != nil {
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.Device{}, ErrNotFound
 		}
