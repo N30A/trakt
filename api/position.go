@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/N30A/trakt/models"
@@ -42,6 +43,7 @@ func (h *positionHandler) getPositions(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "device not found", http.StatusNotFound)
 			return
 		default:
+			log.Printf("failed to retrieve device %d: %v", deviceID, err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -51,6 +53,7 @@ func (h *positionHandler) getPositions(w http.ResponseWriter, r *http.Request) {
 
 	positions, err = h.repo.GetPositionsByDevice(r.Context(), device.ID, from, to)
 	if err != nil {
+		log.Printf("failed to retrieve positions for device %d: %v", device.ID, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -92,6 +95,7 @@ func (h *positionHandler) getLatestPosition(w http.ResponseWriter, r *http.Reque
 				http.Error(w, "device not found", http.StatusNotFound)
 				return
 			default:
+				log.Printf("failed to retrieve device %d: %v", deviceID, err)
 				http.Error(w, "internal error", http.StatusInternalServerError)
 				return
 			}
@@ -103,6 +107,7 @@ func (h *positionHandler) getLatestPosition(w http.ResponseWriter, r *http.Reque
 			case errors.Is(err, repos.ErrNotFound):
 				positions = []models.Position{}
 			default:
+				log.Printf("failed to retrieve latest position for device %d: %v", device.ID, err)
 				http.Error(w, "internal error", http.StatusInternalServerError)
 				return
 			}
@@ -112,6 +117,7 @@ func (h *positionHandler) getLatestPosition(w http.ResponseWriter, r *http.Reque
 	} else {
 		positions, err = h.repo.GetLatestPositions(r.Context())
 		if err != nil {
+			log.Printf("failed to retrieve latest positions: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}

@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 
@@ -21,6 +22,7 @@ func newDeviceHandler(repo *repos.DeviceRepo) *deviceHandler {
 func (h *deviceHandler) getDevices(w http.ResponseWriter, r *http.Request) {
 	devices, err := h.repo.GetDevices(r.Context())
 	if err != nil {
+		log.Printf("failed to retrieve devices: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -51,6 +53,7 @@ func (h *deviceHandler) getDevice(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Printf("failed to retrieve device %d: %v", id, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -84,6 +87,7 @@ func (h *deviceHandler) createDevice(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Printf("failed to create device: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -123,6 +127,7 @@ func (h *deviceHandler) updateDevice(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Printf("failed to update device %d: %v", id, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -148,6 +153,7 @@ func (h *deviceHandler) deleteDevice(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Printf("failed to delete device %d: %v", id, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
