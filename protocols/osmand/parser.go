@@ -11,11 +11,11 @@ type osmandPosition struct {
 	DeviceUniqueID string
 	Latitude       float64
 	Longitude      float64
-	Timestamp      time.Time
-	Speed          *float64 // in knots
-	Course         *float64 // in degrees
-	Altitude       *float64 // in meters
-	Accuracy       *float64 // in meters
+	Timestamp      time.Time // seconds or milliseconds since epoch, ISO 8601 format, or "yyyy-MM-dd HH:mm:ss"
+	Speed          *float64  // in knots
+	Course         *float64  // in degrees
+	Altitude       *float64  // in meters
+	Accuracy       *float64  // in meters
 }
 
 func parsePosition(r *http.Request) (osmandPosition, error) {
@@ -83,19 +83,19 @@ func getTimestampParam(r *http.Request) (time.Time, bool) {
 	// Unix timestamp (seconds eller milliseconds)
 	if number, err := strconv.ParseInt(value, 10, 64); err == nil {
 		if number > 1_000_000_000_000 {
-			return time.UnixMilli(number), true
+			return time.UnixMilli(number).UTC(), true
 		}
 
-		return time.Unix(number, 0), true
+		return time.Unix(number, 0).UTC(), true
 	}
 
 	// ISO 8601 / RFC3339
 	if time, err := time.Parse(time.RFC3339, value); err == nil {
-		return time, true
+		return time.UTC(), true
 	}
 
 	// "yyyy-MM-dd HH:mm:ss"
-	if time, err := time.Parse("2006-01-02 15:04:05", value); err == nil {
+	if time, err := time.ParseInLocation("2006-01-02 15:04:05", value, time.UTC); err == nil {
 		return time, true
 	}
 
