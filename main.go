@@ -13,6 +13,7 @@ import (
 	"github.com/N30A/trakt/api"
 	"github.com/N30A/trakt/protocols/osmand"
 	"github.com/N30A/trakt/repos"
+	"github.com/N30A/trakt/server"
 )
 
 const timeout = time.Second * 5
@@ -40,21 +41,21 @@ func main() {
 	deviceRepo := repos.NewDeviceRepo(pool)
 	positionRepo := repos.NewPositionRepo(pool)
 
-	servers := []Server{
+	servers := []server.Server{
 		api.New(deviceRepo, positionRepo),
 		osmand.New(deviceRepo, positionRepo),
 	}
 
 	errChan := make(chan error, len(servers))
 
-	for _, server := range servers {
+	for _, srv := range servers {
 		wg.Add(1)
-		go func(server Server) {
+		go func(server server.Server) {
 			defer wg.Done()
 			if err := server.Start(); err != nil {
 				errChan <- fmt.Errorf("%s: %w", server.Name(), err)
 			}
-		}(server)
+		}(srv)
 	}
 
 	select {
