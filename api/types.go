@@ -15,7 +15,6 @@ type positionResponse struct {
 	Longitude  float64   `json:"longitude"`
 	FixTime    time.Time `json:"fix_time"`
 	ServerTime time.Time `json:"server_time"`
-	Protocol   string    `json:"protocol"`
 	Altitude   *float64  `json:"altitude"`
 	Speed      *float64  `json:"speed"`
 	Course     *float64  `json:"course"`
