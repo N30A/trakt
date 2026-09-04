@@ -14,11 +14,6 @@ import (
 	"github.com/N30A/trakt/repos"
 )
 
-type ServerConfig struct {
-	Host string
-	Port int
-}
-
 const (
 	host = "0.0.0.0"
 	port = "5055"
