@@ -1,7 +1,5 @@
 package osmand
 
-// https://www.traccar.org/osmand
-
 import (
 	"context"
 	"errors"
@@ -58,7 +56,6 @@ func (s *OsmAndServer) Stop(ctx context.Context) error {
 }
 
 func (s *OsmAndServer) handler(w http.ResponseWriter, r *http.Request) {
-	// expects to recive: application/x-www-form-urlencoded
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
