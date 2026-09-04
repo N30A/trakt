@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/N30A/trakt/models"
-	"github.com/N30A/trakt/repos"
+	"github.com/N30A/trakt/service"
 )
 
 const (
@@ -18,16 +18,14 @@ const (
 )
 
 type OsmAndServer struct {
-	deviceRepo   *repos.DeviceRepo
-	positionRepo *repos.PositionRepo
-	server       *http.Server
+	positionService *service.PositionService
+	server          *http.Server
 }
 
-func New(deviceRepo *repos.DeviceRepo, positionRepo *repos.PositionRepo) *OsmAndServer {
+func New(positionService *service.PositionService) *OsmAndServer {
 	mux := http.NewServeMux()
 	server := &OsmAndServer{
-		deviceRepo:   deviceRepo,
-		positionRepo: positionRepo,
+		positionService: positionService,
 		server: &http.Server{
 			Addr:    net.JoinHostPort(host, port),
 			Handler: mux,
@@ -69,34 +67,16 @@ func (s *OsmAndServer) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := s.deviceRepo.GetDeviceByUniqueID(r.Context(), parsed.DeviceUniqueID)
-	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			log.Printf("unknown osmand device: %s", parsed.DeviceUniqueID)
+	input := toPositionInput(parsed, serverTime)
+
+	if err := s.positionService.SavePosition(r.Context(), input); err != nil {
+		if errors.Is(err, service.ErrDeviceNotFound) {
+			slog.Warn("unknown device", "protocol", input.Protocol, "device_unique_id", input.DeviceUniqueID)
 			http.Error(w, "unknown device", http.StatusUnauthorized)
 			return
 		}
 
-		log.Printf("failed to get device %s: %v", parsed.DeviceUniqueID, err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	position := models.Position{
-		DeviceID:   device.ID,
-		Latitude:   parsed.Latitude,
-		Longitude:  parsed.Longitude,
-		FixTime:    parsed.Timestamp,
-		ServerTime: serverTime,
-		Protocol:   ProtocolOsmAnd,
-		Altitude:   parsed.Altitude,
-		Speed:      parsed.Speed,
-		Course:     parsed.Course,
-		Accuracy:   parsed.Accuracy,
-	}
-
-	if err := s.positionRepo.AddPosition(r.Context(), position); err != nil {
-		log.Printf("failed to add position for device %s: %v", device.UniqueID, err)
+		slog.Error("failed to save position", "protocol", input.Protocol, "device_unique_id", input.DeviceUniqueID, "error", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}

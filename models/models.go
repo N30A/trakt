@@ -17,8 +17,8 @@ type Position struct {
 	Longitude float64
 
 	//DeviceTime time.Time
-	FixTime    time.Time
-	ServerTime time.Time
+	FixTime    time.Time // UTC
+	ServerTime time.Time // UTC
 
 	Protocol Protocol
 

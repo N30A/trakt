@@ -14,6 +14,7 @@ import (
 	"github.com/N30A/trakt/protocols/osmand"
 	"github.com/N30A/trakt/repos"
 	"github.com/N30A/trakt/server"
+	"github.com/N30A/trakt/service"
 )
 
 const timeout = time.Second * 5
@@ -40,10 +41,11 @@ func main() {
 
 	deviceRepo := repos.NewDeviceRepo(pool)
 	positionRepo := repos.NewPositionRepo(pool)
+	positionService := service.NewPositionService(deviceRepo, positionRepo)
 
 	servers := []server.Server{
 		api.New(deviceRepo, positionRepo),
-		osmand.New(deviceRepo, positionRepo),
+		osmand.New(positionService),
 	}
 
 	errChan := make(chan error, len(servers))
