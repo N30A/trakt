@@ -26,7 +26,7 @@ func (h *positionHandler) getPositions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !hasDeviceID {
-		http.Error(w, "deviceid is required", http.StatusBadRequest)
+		http.Error(w, "device_id is required", http.StatusBadRequest)
 		return
 	}
 

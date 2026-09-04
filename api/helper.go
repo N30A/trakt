@@ -19,13 +19,13 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func parseDeviceIDQuery(r *http.Request) (int, bool, error) {
-	value := r.URL.Query().Get("deviceid")
+	value := r.URL.Query().Get("device_id")
 	if value == "" {
 		return 0, false, nil
 	}
 	id, err := strconv.Atoi(value)
 	if err != nil || id <= 0 {
-		return 0, true, errors.New("device id must be a positive integer")
+		return 0, true, errors.New("device_id must be a positive integer")
 	}
 	return id, true, nil
 }
