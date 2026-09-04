@@ -1,14 +1,8 @@
 package models
 
-import (
-	"time"
-)
+import "time"
 
 type Protocol string
-
-const (
-	ProtocolOsmand Protocol = "osmand"
-)
 
 type Device struct {
 	ID       int

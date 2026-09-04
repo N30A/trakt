@@ -91,7 +91,7 @@ func (s *OsmandServer) handler(w http.ResponseWriter, r *http.Request) {
 		Longitude:  parsed.Longitude,
 		FixTime:    parsed.Timestamp,
 		ServerTime: serverTime,
-		Protocol:   models.ProtocolOsmand,
+		Protocol:   ProtocolOsmAnd,
 		Altitude:   parsed.Altitude,
 		Speed:      parsed.Speed,
 		Course:     parsed.Course,
