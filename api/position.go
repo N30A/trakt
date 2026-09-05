@@ -5,16 +5,16 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/N30A/trakt/models"
-	"github.com/N30A/trakt/repos"
+	"github.com/N30A/trakt/device"
+	"github.com/N30A/trakt/position"
 )
 
 type positionHandler struct {
-	repo       *repos.PositionRepo
-	deviceRepo *repos.DeviceRepo
+	repo       *position.PositionRepo
+	deviceRepo *device.DeviceRepo
 }
 
-func newPositionHandler(repo *repos.PositionRepo, deviceRepo *repos.DeviceRepo) *positionHandler {
+func newPositionHandler(repo *position.PositionRepo, deviceRepo *device.DeviceRepo) *positionHandler {
 	return &positionHandler{repo: repo, deviceRepo: deviceRepo}
 }
 
@@ -36,10 +36,10 @@ func (h *positionHandler) getPositions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.deviceRepo.GetDeviceByID(r.Context(), deviceID)
+	dev, err := h.deviceRepo.GetDeviceByID(r.Context(), deviceID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repos.ErrNotFound):
+		case errors.Is(err, device.ErrNotFound):
 			http.Error(w, "device not found", http.StatusNotFound)
 			return
 		default:
@@ -49,11 +49,11 @@ func (h *positionHandler) getPositions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var positions []models.Position
+	var positions []position.Position
 
-	positions, err = h.repo.GetPositionsByDevice(r.Context(), device.ID, from, to)
+	positions, err = h.repo.GetPositionsByDevice(r.Context(), dev.ID, from, to)
 	if err != nil {
-		log.Printf("failed to retrieve positions for device %d: %v", device.ID, err)
+		log.Printf("failed to retrieve positions for device %d: %v", dev.ID, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -84,13 +84,13 @@ func (h *positionHandler) getLatestPosition(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var positions []models.Position
+	var positions []position.Position
 
 	if hasDeviceID {
-		device, err := h.deviceRepo.GetDeviceByID(r.Context(), deviceID)
+		dev, err := h.deviceRepo.GetDeviceByID(r.Context(), deviceID)
 		if err != nil {
 			switch {
-			case errors.Is(err, repos.ErrNotFound):
+			case errors.Is(err, device.ErrNotFound):
 				http.Error(w, "device not found", http.StatusNotFound)
 				return
 			default:
@@ -100,18 +100,18 @@ func (h *positionHandler) getLatestPosition(w http.ResponseWriter, r *http.Reque
 			}
 		}
 
-		position, err := h.repo.GetLatestPositionByDevice(r.Context(), device.ID)
+		pos, err := h.repo.GetLatestPositionByDevice(r.Context(), dev.ID)
 		if err != nil {
 			switch {
-			case errors.Is(err, repos.ErrNotFound):
-				positions = []models.Position{}
+			case errors.Is(err, position.ErrNotFound):
+				positions = []position.Position{}
 			default:
-				log.Printf("failed to retrieve latest position for device %d: %v", device.ID, err)
+				log.Printf("failed to retrieve latest position for device %d: %v", dev.ID, err)
 				http.Error(w, "internal error", http.StatusInternalServerError)
 				return
 			}
 		} else {
-			positions = []models.Position{position}
+			positions = []position.Position{pos}
 		}
 	} else {
 		positions, err = h.repo.GetLatestPositions(r.Context())

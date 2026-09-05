@@ -7,15 +7,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/N30A/trakt/models"
-	"github.com/N30A/trakt/repos"
+	"github.com/N30A/trakt/device"
 )
 
 type deviceHandler struct {
-	repo *repos.DeviceRepo
+	repo *device.DeviceRepo
 }
 
-func newDeviceHandler(repo *repos.DeviceRepo) *deviceHandler {
+func newDeviceHandler(repo *device.DeviceRepo) *deviceHandler {
 	return &deviceHandler{repo: repo}
 }
 
@@ -46,9 +45,9 @@ func (h *deviceHandler) getDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.repo.GetDeviceByID(r.Context(), id)
+	dev, err := h.repo.GetDeviceByID(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
+		if errors.Is(err, device.ErrNotFound) {
 			http.Error(w, "device not found", http.StatusNotFound)
 			return
 		}
@@ -59,9 +58,9 @@ func (h *deviceHandler) getDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, deviceResponse{
-		ID:       device.ID,
-		UniqueID: device.UniqueID,
-		Name:     device.Name,
+		ID:       dev.ID,
+		UniqueID: dev.UniqueID,
+		Name:     dev.Name,
 	})
 }
 
@@ -80,9 +79,9 @@ func (h *deviceHandler) createDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.repo.AddDevice(r.Context(), models.Device{UniqueID: uniqueID, Name: name})
+	dev, err := h.repo.AddDevice(r.Context(), device.Device{UniqueID: uniqueID, Name: name})
 	if err != nil {
-		if errors.Is(err, repos.ErrConflict) {
+		if errors.Is(err, device.ErrConflict) {
 			http.Error(w, "device already exists", http.StatusConflict)
 			return
 		}
@@ -93,9 +92,9 @@ func (h *deviceHandler) createDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, deviceResponse{
-		ID:       device.ID,
-		UniqueID: device.UniqueID,
-		Name:     device.Name,
+		ID:       dev.ID,
+		UniqueID: dev.UniqueID,
+		Name:     dev.Name,
 	})
 }
 
@@ -120,9 +119,9 @@ func (h *deviceHandler) updateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.repo.UpdateDevice(r.Context(), models.Device{ID: id, UniqueID: uniqueID, Name: name})
+	dev, err := h.repo.UpdateDevice(r.Context(), device.Device{ID: id, UniqueID: uniqueID, Name: name})
 	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
+		if errors.Is(err, device.ErrNotFound) {
 			http.Error(w, "device not found", http.StatusNotFound)
 			return
 		}
@@ -133,9 +132,9 @@ func (h *deviceHandler) updateDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, deviceResponse{
-		ID:       device.ID,
-		UniqueID: device.UniqueID,
-		Name:     device.Name,
+		ID:       dev.ID,
+		UniqueID: dev.UniqueID,
+		Name:     dev.Name,
 	})
 }
 
@@ -148,7 +147,7 @@ func (h *deviceHandler) deleteDevice(w http.ResponseWriter, r *http.Request) {
 
 	err = h.repo.DeleteDeviceByID(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
+		if errors.Is(err, device.ErrNotFound) {
 			http.Error(w, "device not found", http.StatusNotFound)
 			return
 		}

@@ -1,4 +1,4 @@
-package repos
+package position
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/N30A/trakt/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,7 +18,7 @@ func NewPositionRepo(pool *pgxpool.Pool) *PositionRepo {
 	return &PositionRepo{pool}
 }
 
-func (r *PositionRepo) AddPosition(ctx context.Context, position models.Position) error {
+func (r *PositionRepo) AddPosition(ctx context.Context, position Position) error {
 	query := `
 		INSERT INTO positions(
 		    device_id, latitude, longitude, fix_time, server_time,
@@ -47,7 +46,7 @@ func (r *PositionRepo) AddPosition(ctx context.Context, position models.Position
 	return nil
 }
 
-func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, from, to time.Time) ([]models.Position, error) {
+func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, from, to time.Time) ([]Position, error) {
 	query := `
 		SELECT
 		    id, device_id, latitude, longitude, fix_time,
@@ -62,7 +61,7 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
-	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
+	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Position])
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
@@ -70,7 +69,7 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 	return positions, nil
 }
 
-func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]models.Position, error) {
+func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]Position, error) {
 	query := `
 		SELECT
 		    id, device_id, latitude, longitude, fix_time,
@@ -84,7 +83,7 @@ func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]models.Position, 
 		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
-	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
+	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Position])
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
@@ -92,7 +91,7 @@ func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]models.Position, 
 	return positions, nil
 }
 
-func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID int) (models.Position, error) {
+func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID int) (Position, error) {
 	query := `
 		SELECT
 		    id, device_id, latitude, longitude, fix_time,
@@ -105,22 +104,22 @@ func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID i
 
 	rows, err := r.pool.Query(ctx, query, deviceID)
 	if err != nil {
-		return models.Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
-	position, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByPos[models.Position])
+	position, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByPos[Position])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return models.Position{}, fmt.Errorf("%w: %v", ErrNotFound, err)
+			return Position{}, fmt.Errorf("%w: %v", ErrNotFound, err)
 		}
 
-		return models.Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	return position, nil
 }
 
-func (r *PositionRepo) GetLatestPositions(ctx context.Context) ([]models.Position, error) {
+func (r *PositionRepo) GetLatestPositions(ctx context.Context) ([]Position, error) {
 	query := `
 		SELECT DISTINCT ON (device_id)
 	    id, device_id, latitude, longitude, fix_time,
@@ -134,7 +133,7 @@ func (r *PositionRepo) GetLatestPositions(ctx context.Context) ([]models.Positio
 		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
-	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[models.Position])
+	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Position])
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
 	}

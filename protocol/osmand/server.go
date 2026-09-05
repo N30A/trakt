@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/N30A/trakt/service"
+	"github.com/N30A/trakt/position"
 )
 
 const (
@@ -18,11 +18,11 @@ const (
 )
 
 type OsmAndServer struct {
-	positionService *service.PositionService
+	positionService *position.PositionService
 	server          *http.Server
 }
 
-func New(positionService *service.PositionService) *OsmAndServer {
+func New(positionService *position.PositionService) *OsmAndServer {
 	mux := http.NewServeMux()
 	server := &OsmAndServer{
 		positionService: positionService,
@@ -70,7 +70,7 @@ func (s *OsmAndServer) handler(w http.ResponseWriter, r *http.Request) {
 	input := toPositionInput(parsed, serverTime)
 
 	if err := s.positionService.SavePosition(r.Context(), input); err != nil {
-		if errors.Is(err, service.ErrDeviceNotFound) {
+		if errors.Is(err, position.ErrNotFound) {
 			slog.Warn("unknown device", "protocol", input.Protocol, "device_unique_id", input.DeviceUniqueID)
 			http.Error(w, "unknown device", http.StatusUnauthorized)
 			return

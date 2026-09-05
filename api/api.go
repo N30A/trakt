@@ -6,7 +6,8 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/N30A/trakt/repos"
+	"github.com/N30A/trakt/device"
+	"github.com/N30A/trakt/position"
 )
 
 const (
@@ -15,12 +16,12 @@ const (
 )
 
 type APIServer struct {
-	deviceRepo   *repos.DeviceRepo
-	positionRepo *repos.PositionRepo
+	deviceRepo   *device.DeviceRepo
+	positionRepo *position.PositionRepo
 	server       *http.Server
 }
 
-func New(deviceRepo *repos.DeviceRepo, positionRepo *repos.PositionRepo) *APIServer {
+func New(deviceRepo *device.DeviceRepo, positionRepo *position.PositionRepo) *APIServer {
 	mux := http.NewServeMux()
 	server := &APIServer{
 		deviceRepo:   deviceRepo,

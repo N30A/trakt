@@ -1,5 +1,7 @@
 package osmand
 
+import "github.com/N30A/trakt/protocol"
+
 // OsmAnd protocol.
 //
 // This protocol was originally used by the OsmAnd mobile app and was later
@@ -17,6 +19,4 @@ package osmand
 //
 // https://www.traccar.org/osmand/
 
-import "github.com/N30A/trakt/models"
-
-const ProtocolOsmAnd models.Protocol = "osmand"
+const ProtocolOsmAnd protocol.Protocol = "osmand"

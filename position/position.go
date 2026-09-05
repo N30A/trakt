@@ -1,14 +1,10 @@
-package models
+package position
 
-import "time"
+import (
+	"time"
 
-type Protocol string
-
-type Device struct {
-	ID       int
-	UniqueID string
-	Name     string
-}
+	"github.com/N30A/trakt/protocol"
+)
 
 type Position struct {
 	ID        int
@@ -20,7 +16,7 @@ type Position struct {
 	FixTime    time.Time // UTC
 	ServerTime time.Time // UTC
 
-	Protocol Protocol
+	Protocol protocol.Protocol
 
 	Altitude *float64
 	Speed    *float64

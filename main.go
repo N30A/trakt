@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/N30A/trakt/api"
-	"github.com/N30A/trakt/protocols/osmand"
-	"github.com/N30A/trakt/repos"
+	"github.com/N30A/trakt/device"
+	"github.com/N30A/trakt/position"
+	"github.com/N30A/trakt/protocol/osmand"
 	"github.com/N30A/trakt/server"
-	"github.com/N30A/trakt/service"
 )
 
 const timeout = time.Second * 5
@@ -39,9 +39,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	deviceRepo := repos.NewDeviceRepo(pool)
-	positionRepo := repos.NewPositionRepo(pool)
-	positionService := service.NewPositionService(deviceRepo, positionRepo)
+	deviceRepo := device.NewDeviceRepo(pool)
+	positionRepo := position.NewPositionRepo(pool)
+	positionService := position.NewPositionService(deviceRepo, positionRepo)
 
 	servers := []server.Server{
 		api.New(deviceRepo, positionRepo),

@@ -1,15 +1,13 @@
-package service
+package position
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"github.com/N30A/trakt/models"
-	"github.com/N30A/trakt/repos"
+	"github.com/N30A/trakt/device"
+	"github.com/N30A/trakt/protocol"
 )
-
-var ErrDeviceNotFound = errors.New("device not found")
 
 type PositionInput struct {
 	DeviceUniqueID string
@@ -21,15 +19,15 @@ type PositionInput struct {
 	Course         *float64
 	Altitude       *float64
 	Accuracy       *float64
-	Protocol       models.Protocol
+	Protocol       protocol.Protocol
 }
 
 type PositionService struct {
-	deviceRepo   *repos.DeviceRepo
-	positionRepo *repos.PositionRepo
+	deviceRepo   *device.DeviceRepo
+	positionRepo *PositionRepo
 }
 
-func NewPositionService(deviceRepo *repos.DeviceRepo, positionRepo *repos.PositionRepo) *PositionService {
+func NewPositionService(deviceRepo *device.DeviceRepo, positionRepo *PositionRepo) *PositionService {
 	return &PositionService{
 		deviceRepo:   deviceRepo,
 		positionRepo: positionRepo,
@@ -39,14 +37,14 @@ func NewPositionService(deviceRepo *repos.DeviceRepo, positionRepo *repos.Positi
 func (s *PositionService) SavePosition(ctx context.Context, input PositionInput) error {
 	device, err := s.deviceRepo.GetDeviceByUniqueID(ctx, input.DeviceUniqueID)
 	if err != nil {
-		if errors.Is(err, repos.ErrNotFound) {
-			return ErrDeviceNotFound
+		if errors.Is(err, ErrNotFound) {
+			return ErrNotFound
 		}
 
 		return err
 	}
 
-	position := models.Position{
+	position := Position{
 		DeviceID:   device.ID,
 		Latitude:   input.Latitude,
 		Longitude:  input.Longitude,
