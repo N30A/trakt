@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/N30A/trakt/api"
+	"github.com/N30A/trakt/config"
 	"github.com/N30A/trakt/device"
 	"github.com/N30A/trakt/position"
 	"github.com/N30A/trakt/protocol/osmand"
@@ -28,7 +29,7 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 
-	cfg, err := loadConfig()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}

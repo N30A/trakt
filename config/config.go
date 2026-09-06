@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func requireEnvs() error {
 	return nil
 }
 
-func loadConfig() (Config, error) {
+func Load() (Config, error) {
 	if err := godotenv.Load(); err != nil {
 		log.Println(".env not found, using environment instead")
 	}

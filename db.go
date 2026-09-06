@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/N30A/trakt/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func buildConnString(config DBConfig) string {
+func buildConnString(config config.DBConfig) string {
 	params := config.Params
 	if params != "" && !strings.HasPrefix(params, "?") {
 		params = "?" + params
@@ -26,7 +27,7 @@ func buildConnString(config DBConfig) string {
 	)
 }
 
-func connectToDB(ctx context.Context, config DBConfig) (*pgxpool.Pool, error) {
+func connectToDB(ctx context.Context, config config.DBConfig) (*pgxpool.Pool, error) {
 	connString := buildConnString(config)
 
 	pool, err := pgxpool.New(ctx, connString)
