@@ -46,6 +46,26 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id int) (User, error) {
 	return user, nil
 }
 
+func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	query := `
+		SELECT
+			id, email, password_hash, role
+		FROM users
+		WHERE email = $1
+	`
+
+	var user User
+	err := r.pool.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Role)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, fmt.Errorf("%w: %v", ErrNotFound, err)
+		}
+		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+	}
+
+	return user, nil
+}
+
 func (r *UserRepo) CreateUser(ctx context.Context, newUser User) (User, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
