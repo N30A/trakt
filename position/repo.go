@@ -27,7 +27,7 @@ func (r *PositionRepo) AddPosition(ctx context.Context, position Position) error
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 	`
 
-	_, err := r.pool.Exec(ctx, query,
+	if _, err := r.pool.Exec(ctx, query,
 		position.DeviceID,
 		position.Latitude,
 		position.Longitude,
@@ -38,9 +38,8 @@ func (r *PositionRepo) AddPosition(ctx context.Context, position Position) error
 		position.Speed,
 		position.Course,
 		position.Accuracy,
-	)
-	if err != nil {
-		return fmt.Errorf("%w: %v", ErrInternal, err)
+	); err != nil {
+		return err
 	}
 
 	return nil
@@ -58,12 +57,12 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 
 	rows, err := r.pool.Query(ctx, query, deviceID, from, to)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Position])
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	return positions, nil
@@ -80,12 +79,12 @@ func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]Position, error) 
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Position])
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	return positions, nil
@@ -104,7 +103,7 @@ func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID i
 
 	rows, err := r.pool.Query(ctx, query, deviceID)
 	if err != nil {
-		return Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return Position{}, err
 	}
 
 	position, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByPos[Position])
@@ -113,7 +112,7 @@ func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID i
 			return Position{}, fmt.Errorf("%w: %v", ErrNotFound, err)
 		}
 
-		return Position{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return Position{}, err
 	}
 
 	return position, nil
@@ -130,12 +129,12 @@ func (r *PositionRepo) GetLatestPositions(ctx context.Context) ([]Position, erro
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Position])
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	return positions, nil

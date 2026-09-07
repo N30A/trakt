@@ -33,7 +33,7 @@ func (r *DeviceRepo) GetDeviceByID(ctx context.Context, deviceID int) (Device, e
 			return Device{}, ErrNotFound
 		}
 
-		return Device{}, ErrInternal
+		return Device{}, err
 	}
 
 	return device, nil
@@ -54,7 +54,7 @@ func (r *DeviceRepo) GetDeviceByUniqueID(ctx context.Context, uniqueID string) (
 			return Device{}, ErrNotFound
 		}
 
-		return Device{}, ErrInternal
+		return Device{}, err
 	}
 
 	return device, nil
@@ -69,12 +69,12 @@ func (r *DeviceRepo) GetDevices(ctx context.Context) ([]Device, error) {
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	devices, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Device])
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInternal, err)
+		return nil, err
 	}
 
 	return devices, nil
@@ -88,7 +88,7 @@ func (r *DeviceRepo) DeleteDeviceByID(ctx context.Context, deviceID int) error {
 
 	tag, err := r.pool.Exec(ctx, query, deviceID)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrInternal, err)
+		return err
 	}
 	if tag.RowsAffected() == 0 {
 		return fmt.Errorf("%w: %v", ErrNotFound, err)
@@ -111,7 +111,7 @@ func (r *DeviceRepo) AddDevice(ctx context.Context, newDevice Device) (Device, e
 			return Device{}, fmt.Errorf("%w: %v", ErrConflict, err)
 		}
 
-		return Device{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return Device{}, err
 	}
 
 	return device, nil
@@ -133,7 +133,7 @@ func (r *DeviceRepo) UpdateDevice(ctx context.Context, updatedDevice Device) (De
 			return Device{}, fmt.Errorf("%w: %v", ErrNotFound, err)
 		}
 
-		return Device{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return Device{}, err
 	}
 
 	return device, nil

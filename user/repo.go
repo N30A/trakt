@@ -13,7 +13,6 @@ import (
 var (
 	ErrNotFound          = errors.New("not found")
 	ErrConflict          = errors.New("conflict")
-	ErrInternal          = errors.New("internal error")
 	ErrInitialUserExists = errors.New("initial user already exists")
 )
 
@@ -39,7 +38,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id int) (User, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, fmt.Errorf("%w: %v", ErrNotFound, err)
 		}
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 
 	return user, nil
@@ -59,7 +58,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (User, erro
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, fmt.Errorf("%w: %v", ErrNotFound, err)
 		}
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 
 	return user, nil
@@ -68,19 +67,19 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (User, erro
 func (r *UserRepo) CreateInitialUser(ctx context.Context, email, passwordHash string) (User, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx, "SELECT pg_advisory_xact_lock($1)", database.LockCreateInitialUser)
 	if err != nil {
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 
 	var exists bool
 	err = tx.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM users)").Scan(&exists)
 	if err != nil {
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 
 	if exists {
@@ -96,11 +95,11 @@ func (r *UserRepo) CreateInitialUser(ctx context.Context, email, passwordHash st
 	var user User
 	err = tx.QueryRow(ctx, query, email, passwordHash, RoleAdmin).Scan(&user.ID, &user.Email, &user.Role)
 	if err != nil {
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 
 	return user, nil
@@ -124,7 +123,7 @@ func (r *UserRepo) CreateUser(ctx context.Context, newUser User) (User, error) {
 		if database.IsError(err, database.PGErrUniqueViolation) {
 			return User{}, fmt.Errorf("%w: %v", ErrConflict, err)
 		}
-		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+		return User{}, err
 	}
 
 	return user, nil
