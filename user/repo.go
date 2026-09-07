@@ -5,17 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/N30A/trakt/database"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const createUserLockID int64 = 1
-
 var (
-	ErrNotFound = errors.New("not found")
-	ErrConflict = errors.New("conflict")
-	ErrInternal = errors.New("internal error")
+	ErrNotFound          = errors.New("not found")
+	ErrConflict          = errors.New("conflict")
+	ErrInternal          = errors.New("internal error")
+	ErrInitialUserExists = errors.New("initial user already exists")
 )
 
 type UserRepo struct {
@@ -66,46 +65,65 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (User, erro
 	return user, nil
 }
 
-func (r *UserRepo) CreateUser(ctx context.Context, newUser User) (User, error) {
+func (r *UserRepo) CreateInitialUser(ctx context.Context, email, passwordHash string) (User, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Exec(ctx, "SELECT pg_advisory_xact_lock($1)", createUserLockID)
+	_, err = tx.Exec(ctx, "SELECT pg_advisory_xact_lock($1)", database.LockCreateInitialUser)
 	if err != nil {
 		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	var exists bool
-	err = tx.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM users)").Scan(&exists) // always returns true or false, no need to check for ErrNoRows
+	err = tx.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM users)").Scan(&exists)
 	if err != nil {
 		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+	}
+
+	if exists {
+		return User{}, ErrInitialUserExists
 	}
 
 	query := `
 		INSERT INTO users (email, password_hash, role)
 		VALUES ($1, $2, $3)
-		RETURNING id, email, password_hash, role
+		RETURNING id, email, role
 	`
 
-	role := newUser.Role
-	if !exists {
-		role = RoleAdmin
-	}
-
 	var user User
-	row := tx.QueryRow(ctx, query, newUser.Email, newUser.PasswordHash, role)
-	err = row.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Role)
+	err = tx.QueryRow(ctx, query, email, passwordHash, RoleAdmin).Scan(&user.ID, &user.Email, &user.Role)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return User{}, fmt.Errorf("%w: %v", ErrConflict, err)
-		}
 		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
+		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
+	}
+
+	return user, nil
+}
+
+func (r *UserRepo) CreateUser(ctx context.Context, newUser User) (User, error) {
+	query := `
+		INSERT INTO users (email, password_hash, role)
+		VALUES ($1, $2, $3)
+		RETURNING id, email, role
+	`
+
+	var user User
+	err := r.pool.QueryRow(ctx, query,
+		newUser.Email,
+		newUser.PasswordHash,
+		newUser.Role,
+	).Scan(&user.ID, &user.Email, &user.Role)
+
+	if err != nil {
+		if database.IsError(err, database.PGErrUniqueViolation) {
+			return User{}, fmt.Errorf("%w: %v", ErrConflict, err)
+		}
 		return User{}, fmt.Errorf("%w: %v", ErrInternal, err)
 	}
 
