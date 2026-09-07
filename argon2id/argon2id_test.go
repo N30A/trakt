@@ -54,8 +54,8 @@ func TestDecodeHash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if *params != *DevelopmentParams {
-		t.Fatalf("expected %#v got %#v", *DevelopmentParams, *params)
+	if params != DevelopmentParams {
+		t.Fatalf("expected %#v got %#v", DevelopmentParams, params)
 	}
 }
 
@@ -69,8 +69,8 @@ func TestCheckHash(t *testing.T) {
 	if !ok {
 		t.Fatal("expected password to match")
 	}
-	if *params != *DevelopmentParams {
-		t.Fatalf("expected %#v got %#v", *DevelopmentParams, *params)
+	if params != DevelopmentParams {
+		t.Fatalf("expected %#v got %#v", DevelopmentParams, params)
 	}
 }
 

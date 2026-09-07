@@ -31,7 +31,7 @@ var (
 // Custom parameters should be set for production applications depending on
 // available memory/CPU resources and business requirements.
 // For uniformly safe options see [FirstRecommendedParams] and [SecondRecommendedParams].
-var DevelopmentParams = &Params{
+var DevelopmentParams = Params{
 	Memory:      64 * 1024,
 	Iterations:  1,
 	Parallelism: uint8(runtime.NumCPU()),
@@ -43,7 +43,7 @@ var DevelopmentParams = &Params{
 // or hardware is acceptable".
 // This is RFC 9106's first recommended option.
 // See https://www.rfc-editor.org/rfc/rfc9106.html#name-parameter-choice
-var FirstRecommendedParams = &Params{
+var FirstRecommendedParams = Params{
 	Memory:      1 << 21, // 2 GiB = 2^21 * 1 KiB
 	Iterations:  1,
 	Parallelism: 4,
@@ -54,7 +54,7 @@ var FirstRecommendedParams = &Params{
 // SecondRecommendedParams should be used if "much less memory is available".
 // This is RFC 9106's second recommended option.
 // See https://www.rfc-editor.org/rfc/rfc9106.html#name-parameter-choice
-var SecondRecommendedParams = &Params{
+var SecondRecommendedParams = Params{
 	Memory:      64 * 1024,
 	Iterations:  3,
 	Parallelism: 4,
