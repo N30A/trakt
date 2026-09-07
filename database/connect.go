@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func buildConnString(config config.DBConfig) string {
 	)
 }
 
-func connectToDB(ctx context.Context, config config.DBConfig) (*pgxpool.Pool, error) {
+func Connect(ctx context.Context, config config.DBConfig) (*pgxpool.Pool, error) {
 	connString := buildConnString(config)
 
 	pool, err := pgxpool.New(ctx, connString)

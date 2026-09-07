@@ -12,6 +12,7 @@ import (
 
 	"github.com/N30A/trakt/api"
 	"github.com/N30A/trakt/config"
+	"github.com/N30A/trakt/database"
 	"github.com/N30A/trakt/device"
 	"github.com/N30A/trakt/position"
 	"github.com/N30A/trakt/protocol/osmand"
@@ -35,7 +36,7 @@ func main() {
 	}
 
 	poolCtx, poolCancel := context.WithCancel(context.Background())
-	pool, err := connectToDB(poolCtx, cfg.DB)
+	pool, err := database.Connect(poolCtx, cfg.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
