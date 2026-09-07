@@ -98,7 +98,7 @@ type Params struct {
 // derived key prefixed by the salt and parameters. It looks like this:
 //
 //	$argon2id$v=19$m=65536,t=3,p=2$c29tZXNhbHQ$RdescudvJCsgt3ub+b+dWRWJTmaaJObG
-func CreateHash(password string, params *Params) string {
+func CreateHash(password string, params Params) string {
 	salt := make([]byte, params.SaltLength)
 	_, _ = rand.Read(salt) // no error will be returned and the slice is always filled entirely
 
@@ -122,10 +122,10 @@ func ComparePasswordAndHash(password, hash string) (match bool, err error) {
 // CheckHash is like ComparePasswordAndHash, except it also returns the params that the hash was
 // created with. This can be useful if you want to update your hash params over time (which you
 // should).
-func CheckHash(password, hash string) (match bool, params *Params, err error) {
+func CheckHash(password, hash string) (match bool, params Params, err error) {
 	params, salt, key, err := DecodeHash(hash)
 	if err != nil {
-		return false, nil, err
+		return false, Params{}, err
 	}
 
 	otherKey := argon2.IDKey([]byte(password), salt, params.Iterations, params.Memory, params.Parallelism, params.KeyLength)
@@ -139,41 +139,41 @@ func CheckHash(password, hash string) (match bool, params *Params, err error) {
 
 // DecodeHash expects a hash created from this package, and parses it to return the params used to
 // create it, as well as the salt and key (password hash).
-func DecodeHash(hash string) (params *Params, salt, key []byte, err error) {
+func DecodeHash(hash string) (params Params, salt, key []byte, err error) {
 	parts := strings.Split(hash, "$")
 	if len(parts) != 6 {
-		return nil, nil, nil, ErrInvalidHash
+		return Params{}, nil, nil, ErrInvalidHash
 	}
 
 	if parts[1] != "argon2id" {
-		return nil, nil, nil, ErrIncompatibleVariant
+		return Params{}, nil, nil, ErrIncompatibleVariant
 	}
 
 	var version int
 	_, err = fmt.Sscanf(parts[2], "v=%d", &version)
 	if err != nil {
-		return nil, nil, nil, err
+		return Params{}, nil, nil, err
 	}
 
 	if version != argon2.Version {
-		return nil, nil, nil, ErrIncompatibleVersion
+		return Params{}, nil, nil, ErrIncompatibleVersion
 	}
 
-	params = &Params{}
+	params = Params{}
 	_, err = fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &params.Memory, &params.Iterations, &params.Parallelism)
 	if err != nil {
-		return nil, nil, nil, err
+		return Params{}, nil, nil, err
 	}
 
 	salt, err = base64.RawStdEncoding.Strict().DecodeString(parts[4])
 	if err != nil {
-		return nil, nil, nil, err
+		return Params{}, nil, nil, err
 	}
 	params.SaltLength = uint32(len(salt))
 
 	key, err = base64.RawStdEncoding.Strict().DecodeString(parts[5])
 	if err != nil {
-		return nil, nil, nil, err
+		return Params{}, nil, nil, err
 	}
 	params.KeyLength = uint32(len(key))
 

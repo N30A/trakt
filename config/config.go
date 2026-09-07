@@ -10,7 +10,8 @@ import (
 )
 
 type Config struct {
-	DB DBConfig
+	DB        DBConfig
+	JWTSecret string
 }
 
 type DBConfig struct {
@@ -28,6 +29,7 @@ var requiredEnvs = []string{
 	"DATABASE_PASSWORD",
 	"DATABASE_HOST",
 	"DATABASE_PORT",
+	"JWT_SECRET",
 }
 
 func getEnv(key string) string {
@@ -67,5 +69,6 @@ func Load() (Config, error) {
 			Port:     getEnv("DATABASE_PORT"),
 			Params:   getEnv("DATABASE_PARAMS"),
 		},
+		JWTSecret: getEnv("JWT_SECRET"),
 	}, nil
 }
