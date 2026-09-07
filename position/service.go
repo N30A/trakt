@@ -35,9 +35,9 @@ func NewPositionService(deviceRepo *device.DeviceRepo, positionRepo *PositionRep
 }
 
 func (s *PositionService) SavePosition(ctx context.Context, input PositionInput) error {
-	device, err := s.deviceRepo.GetDeviceByUniqueID(ctx, input.DeviceUniqueID)
+	dev, err := s.deviceRepo.GetDeviceByUniqueID(ctx, input.DeviceUniqueID)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
+		if errors.Is(err, device.ErrNotFound) {
 			return ErrNotFound
 		}
 
@@ -45,7 +45,7 @@ func (s *PositionService) SavePosition(ctx context.Context, input PositionInput)
 	}
 
 	position := Position{
-		DeviceID:   device.ID,
+		DeviceID:   dev.ID,
 		Latitude:   input.Latitude,
 		Longitude:  input.Longitude,
 		FixTime:    input.FixTime,
