@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("not found")
-	ErrConflict          = errors.New("conflict")
-	ErrInitialUserExists = errors.New("initial user already exists")
+	ErrNotFound = errors.New("not found")
+	ErrConflict = errors.New("conflict")
 )
 
 type UserRepo struct {
@@ -83,7 +82,7 @@ func (r *UserRepo) CreateInitialUser(ctx context.Context, email, passwordHash st
 	}
 
 	if exists {
-		return User{}, ErrInitialUserExists
+		return User{}, ErrConflict
 	}
 
 	query := `
