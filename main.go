@@ -43,10 +43,11 @@ func main() {
 
 	deviceRepo := device.NewDeviceRepo(pool)
 	positionRepo := position.NewPositionRepo(pool)
+
 	positionService := position.NewPositionService(deviceRepo, positionRepo)
 
 	servers := []server.Server{
-		api.New(deviceRepo, positionRepo),
+		api.New(deviceRepo, positionService),
 		osmand.New(positionService),
 	}
 

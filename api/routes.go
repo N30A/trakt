@@ -15,8 +15,11 @@ func (s *APIServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /devices/{id}", deviceHandler.updateDevice)
 	mux.HandleFunc("DELETE /devices/{id}", deviceHandler.deleteDevice)
 
-	positionHandler := newPositionHandler(s.positionRepo, s.deviceRepo)
+	positionHandler := newPositionHandler(s.positionService)
 
-	mux.HandleFunc("GET /positions", positionHandler.getPositions)
-	mux.HandleFunc("GET /positions/latest", positionHandler.getLatestPosition)
+	// GET /positions?device_id=1
+	// GET /positions?device_id=1&from=<date>&to=<date>
+	// GET /positions?from=<date>&to=<date>
+	mux.HandleFunc("GET /positions", positionHandler.positions)
+	mux.HandleFunc("GET /positions/latest", positionHandler.latestPositions)
 }

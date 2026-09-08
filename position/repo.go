@@ -2,8 +2,6 @@ package position
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -45,13 +43,14 @@ func (r *PositionRepo) AddPosition(ctx context.Context, position Position) error
 	return nil
 }
 
-func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, from, to time.Time) ([]Position, error) {
+func (r *PositionRepo) Positions(ctx context.Context, deviceID *int, from, to time.Time) ([]Position, error) {
 	query := `
 		SELECT
-		    id, device_id, latitude, longitude, fix_time,
-		    server_time, protocol, altitude, speed, course, accuracy
+			id, device_id, latitude, longitude, fix_time,
+			server_time, protocol, altitude, speed, course, accuracy
 		FROM positions
-		WHERE device_id = $1 AND (fix_time >= $2 AND fix_time <= $3)
+		WHERE ($1::integer IS NULL OR device_id = $1)
+		AND fix_time BETWEEN $2 AND $3
 		ORDER BY fix_time ASC;
 	`
 
@@ -68,7 +67,7 @@ func (r *PositionRepo) GetPositionsByDevice(ctx context.Context, deviceID int, f
 	return positions, nil
 }
 
-func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]Position, error) {
+func (r *PositionRepo) AllPositions(ctx context.Context) ([]Position, error) {
 	query := `
 		SELECT
 		    id, device_id, latitude, longitude, fix_time,
@@ -90,35 +89,7 @@ func (r *PositionRepo) GetAllPositions(ctx context.Context) ([]Position, error) 
 	return positions, nil
 }
 
-func (r *PositionRepo) GetLatestPositionByDevice(ctx context.Context, deviceID int) (Position, error) {
-	query := `
-		SELECT
-		    id, device_id, latitude, longitude, fix_time,
-		    server_time, protocol, altitude, speed, course, accuracy
-		FROM positions
-		WHERE device_id = $1
-		ORDER BY fix_time DESC
-		LIMIT 1;
-	`
-
-	rows, err := r.pool.Query(ctx, query, deviceID)
-	if err != nil {
-		return Position{}, err
-	}
-
-	position, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByPos[Position])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return Position{}, fmt.Errorf("%w: %v", ErrNotFound, err)
-		}
-
-		return Position{}, err
-	}
-
-	return position, nil
-}
-
-func (r *PositionRepo) GetLatestPositions(ctx context.Context) ([]Position, error) {
+func (r *PositionRepo) LatestPositions(ctx context.Context) ([]Position, error) {
 	query := `
 		SELECT DISTINCT ON (device_id)
 	    id, device_id, latitude, longitude, fix_time,

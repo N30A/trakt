@@ -59,3 +59,11 @@ func (s *PositionService) SavePosition(ctx context.Context, input PositionInput)
 
 	return s.positionRepo.AddPosition(ctx, position)
 }
+
+func (s *PositionService) Positions(ctx context.Context, deviceID *int, from, to time.Time) ([]Position, error) {
+	return s.positionRepo.Positions(ctx, deviceID, from, to)
+}
+
+func (s *PositionService) LatestPositions(ctx context.Context) ([]Position, error) {
+	return s.positionRepo.LatestPositions(ctx)
+}

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,29 +19,32 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 	}
 }
 
-func parseDeviceIDQuery(r *http.Request) (int, bool, error) {
-	value := r.URL.Query().Get("device_id")
+func parseDeviceIDQuery(r *http.Request) (*int, error) {
+	value := strings.TrimSpace(r.URL.Query().Get("device_id"))
 	if value == "" {
-		return 0, false, nil
+		return nil, nil
 	}
+
 	id, err := strconv.Atoi(value)
 	if err != nil || id <= 0 {
-		return 0, true, errors.New("device_id must be a positive integer")
+		return nil, errors.New("device_id must be a positive integer")
 	}
-	return id, true, nil
+
+	return &id, nil
 }
 
 func parseDeviceIDPath(r *http.Request) (int, error) {
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := strconv.Atoi(strings.TrimSpace(r.PathValue("id")))
 	if err != nil || id <= 0 {
 		return 0, errors.New("device id must be a positive integer")
 	}
+
 	return id, nil
 }
 
 func parseTimeRange(r *http.Request) (time.Time, time.Time, error) {
-	fromStr := r.URL.Query().Get("from")
-	toStr := r.URL.Query().Get("to")
+	fromStr := strings.TrimSpace(r.URL.Query().Get("from"))
+	toStr := strings.TrimSpace(r.URL.Query().Get("to"))
 
 	if fromStr == "" || toStr == "" {
 		return time.Time{}, time.Time{}, errors.New("from and to are required")

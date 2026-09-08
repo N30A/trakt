@@ -16,16 +16,16 @@ const (
 )
 
 type APIServer struct {
-	deviceRepo   *device.DeviceRepo
-	positionRepo *position.PositionRepo
-	server       *http.Server
+	deviceRepo      *device.DeviceRepo
+	positionService *position.PositionService
+	server          *http.Server
 }
 
-func New(deviceRepo *device.DeviceRepo, positionRepo *position.PositionRepo) *APIServer {
+func New(deviceRepo *device.DeviceRepo, positionService *position.PositionService) *APIServer {
 	mux := http.NewServeMux()
 	server := &APIServer{
-		deviceRepo:   deviceRepo,
-		positionRepo: positionRepo,
+		deviceRepo:      deviceRepo,
+		positionService: positionService,
 		server: &http.Server{
 			Addr:    net.JoinHostPort(host, port),
 			Handler: mux,
