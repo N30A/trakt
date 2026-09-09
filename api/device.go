@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/N30A/trakt/device"
@@ -36,6 +37,15 @@ func (h *deviceHandler) getDevices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, response)
+}
+
+func parseDeviceIDPath(r *http.Request) (int, error) {
+	id, err := strconv.Atoi(strings.TrimSpace(r.PathValue("id")))
+	if err != nil || id <= 0 {
+		return 0, errors.New("device id must be a positive integer")
+	}
+
+	return id, nil
 }
 
 func (h *deviceHandler) getDevice(w http.ResponseWriter, r *http.Request) {
