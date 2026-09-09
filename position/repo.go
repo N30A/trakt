@@ -43,40 +43,19 @@ func (r *PositionRepo) AddPosition(ctx context.Context, position Position) error
 	return nil
 }
 
-func (r *PositionRepo) Positions(ctx context.Context, deviceID *int, from, to time.Time) ([]Position, error) {
+func (r *PositionRepo) DevicePositions(ctx context.Context, deviceIDs []int, from, to time.Time) ([]Position, error) {
 	query := `
 		SELECT
 			id, device_id, latitude, longitude, fix_time,
 			server_time, protocol, altitude, speed, course, accuracy
 		FROM positions
-		WHERE ($1::integer IS NULL OR device_id = $1)
-		AND fix_time BETWEEN $2 AND $3
-		ORDER BY fix_time ASC;
+		WHERE device_id = ANY($1)
+		  AND fix_time >= $2
+		  AND fix_time < $3
+		ORDER BY fix_time ASC
 	`
 
-	rows, err := r.pool.Query(ctx, query, deviceID, from, to)
-	if err != nil {
-		return nil, err
-	}
-
-	positions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Position])
-	if err != nil {
-		return nil, err
-	}
-
-	return positions, nil
-}
-
-func (r *PositionRepo) AllPositions(ctx context.Context) ([]Position, error) {
-	query := `
-		SELECT
-		    id, device_id, latitude, longitude, fix_time,
-		    server_time, protocol, altitude, speed, course, accuracy
-		FROM positions
-		ORDER BY fix_time ASC;
-	`
-
-	rows, err := r.pool.Query(ctx, query)
+	rows, err := r.pool.Query(ctx, query, deviceIDs, from, to)
 	if err != nil {
 		return nil, err
 	}

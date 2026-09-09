@@ -17,9 +17,9 @@ func (s *APIServer) registerRoutes(mux *http.ServeMux) {
 
 	positionHandler := newPositionHandler(s.positionService)
 
-	// GET /positions?device_id=1
 	// GET /positions?device_id=1&from=<date>&to=<date>
-	// GET /positions?from=<date>&to=<date>
-	mux.HandleFunc("GET /positions", positionHandler.positions)
+	// GET /positions?device_id=1&device_id=2&from=<date>&to=<date>
+	mux.HandleFunc("GET /positions", positionHandler.devicePositions)
+	// GET /positions/latest
 	mux.HandleFunc("GET /positions/latest", positionHandler.latestPositions)
 }

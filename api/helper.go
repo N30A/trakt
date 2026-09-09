@@ -7,30 +7,19 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
+	body, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("failed to encode response: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Printf("failed to encode response: %v", err)
-	}
-}
-
-func parseDeviceIDQuery(r *http.Request) (*int, error) {
-	value := strings.TrimSpace(r.URL.Query().Get("device_id"))
-	if value == "" {
-		return nil, nil
-	}
-
-	id, err := strconv.Atoi(value)
-	if err != nil || id <= 0 {
-		return nil, errors.New("device_id must be a positive integer")
-	}
-
-	return &id, nil
+	_, _ = w.Write(body)
 }
 
 func parseDeviceIDPath(r *http.Request) (int, error) {
@@ -40,25 +29,4 @@ func parseDeviceIDPath(r *http.Request) (int, error) {
 	}
 
 	return id, nil
-}
-
-func parseTimeRange(r *http.Request) (time.Time, time.Time, error) {
-	fromStr := strings.TrimSpace(r.URL.Query().Get("from"))
-	toStr := strings.TrimSpace(r.URL.Query().Get("to"))
-
-	if fromStr == "" || toStr == "" {
-		return time.Time{}, time.Time{}, errors.New("from and to are required")
-	}
-
-	from, err := time.Parse(time.RFC3339, fromStr)
-	if err != nil {
-		return time.Time{}, time.Time{}, errors.New("from must be a valid RFC3339 timestamp")
-	}
-
-	to, err := time.Parse(time.RFC3339, toStr)
-	if err != nil {
-		return time.Time{}, time.Time{}, errors.New("to must be a valid RFC3339 timestamp")
-	}
-
-	return from, to, nil
 }
