@@ -22,4 +22,9 @@ func (s *APIServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /positions", positionHandler.devicePositions)
 	// GET /positions/latest
 	mux.HandleFunc("GET /positions/latest", positionHandler.latestPositions)
+
+	authHandler := newAuthHandler(s.authService)
+
+	mux.HandleFunc("POST /auth/init", authHandler.init)
+	mux.HandleFunc("POST /auth/login", authHandler.login)
 }
