@@ -18,3 +18,15 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.WriteHeader(status)
 	_, _ = w.Write(body)
 }
+
+func decodeJSON[T any](r *http.Request) (T, error) {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	var data T
+	if err := decoder.Decode(&data); err != nil {
+		return data, err
+	}
+
+	return data, nil
+}
