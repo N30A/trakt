@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -124,8 +123,8 @@ func (h *deviceHandler) updateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request updateDeviceRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	request, err := decodeJSON[updateDeviceRequest](r)
+	if err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
