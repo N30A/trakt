@@ -3,10 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/N30A/trakt/device"
 )
@@ -74,9 +76,11 @@ func (h *deviceHandler) getDevice(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+const maxDeviceNameRunes = 100
+
 func (h *deviceHandler) createDevice(w http.ResponseWriter, r *http.Request) {
-	var request createDeviceRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	request, err := decodeJSON[createDeviceRequest](r)
+	if err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
@@ -86,6 +90,11 @@ func (h *deviceHandler) createDevice(w http.ResponseWriter, r *http.Request) {
 
 	if uniqueID == "" || name == "" {
 		http.Error(w, "unique_id and name must not be empty", http.StatusBadRequest)
+		return
+	}
+
+	if utf8.RuneCountInString(name) > maxDeviceNameRunes {
+		http.Error(w, fmt.Sprintf("name must not exceed %d characters", maxDeviceNameRunes), http.StatusBadRequest)
 		return
 	}
 
