@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/N30A/trakt/database"
+	"github.com/N30A/trakt/internal/database"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

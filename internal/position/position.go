@@ -3,7 +3,7 @@ package position
 import (
 	"time"
 
-	"github.com/N30A/trakt/protocol"
+	"github.com/N30A/trakt/internal/protocol"
 )
 
 type Position struct {

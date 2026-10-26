@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/N30A/trakt/argon2id"
-	"github.com/N30A/trakt/user"
+	"github.com/N30A/trakt/internal/argon2id"
+	"github.com/N30A/trakt/internal/user"
 )
 
 var (

@@ -1,11 +1,11 @@
-package api
+package main
 
 import (
 	"errors"
 	"net/http"
 
-	"github.com/N30A/trakt/auth"
-	"github.com/N30A/trakt/validate"
+	"github.com/N30A/trakt/internal/auth"
+	"github.com/N30A/trakt/internal/validate"
 )
 
 type authHandler struct {

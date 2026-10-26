@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/N30A/trakt/device"
-	"github.com/N30A/trakt/protocol"
+	"github.com/N30A/trakt/internal/device"
+	"github.com/N30A/trakt/internal/protocol"
 )
 
 type PositionInput struct {

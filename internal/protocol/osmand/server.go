@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/N30A/trakt/position"
+	"github.com/N30A/trakt/internal/position"
 )
 
 const (

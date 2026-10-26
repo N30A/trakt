@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/N30A/trakt/auth"
-	"github.com/N30A/trakt/device"
-	"github.com/N30A/trakt/position"
+	"github.com/N30A/trakt/internal/auth"
+	"github.com/N30A/trakt/internal/device"
+	"github.com/N30A/trakt/internal/position"
 )
 
 const (
@@ -23,7 +23,7 @@ type APIServer struct {
 	server          *http.Server
 }
 
-func New(deviceRepo *device.DeviceRepo, positionService *position.PositionService, authService *auth.AuthService) *APIServer {
+func NewAPIServer(deviceRepo *device.DeviceRepo, positionService *position.PositionService, authService *auth.AuthService) *APIServer {
 	mux := http.NewServeMux()
 	server := &APIServer{
 		deviceRepo:      deviceRepo,

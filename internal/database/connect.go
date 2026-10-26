@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/N30A/trakt/config"
+	"github.com/N30A/trakt/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

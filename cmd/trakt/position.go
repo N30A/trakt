@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/N30A/trakt/position"
+	"github.com/N30A/trakt/internal/position"
 )
 
 type positionHandler struct {
@@ -59,6 +59,19 @@ func parseDateRange(r *http.Request) (time.Time, time.Time, error) {
 	}
 
 	return from, to, nil
+}
+
+type positionResponse struct {
+	ID         int       `json:"id"`
+	DeviceID   int       `json:"device_id"`
+	Latitude   float64   `json:"latitude"`
+	Longitude  float64   `json:"longitude"`
+	FixTime    time.Time `json:"fix_time"`
+	ServerTime time.Time `json:"server_time"`
+	Altitude   *float64  `json:"altitude"`
+	Speed      *float64  `json:"speed"`
+	Course     *float64  `json:"course"`
+	Accuracy   *float64  `json:"accuracy"`
 }
 
 func (h *positionHandler) devicePositions(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,6 @@
 package osmand
 
-import "github.com/N30A/trakt/protocol"
+import "github.com/N30A/trakt/internal/protocol"
 
 // OsmAnd protocol.
 //

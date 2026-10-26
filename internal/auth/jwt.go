@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/N30A/trakt/config"
-	"github.com/N30A/trakt/user"
+	"github.com/N30A/trakt/internal/config"
+	"github.com/N30A/trakt/internal/user"
 	"github.com/golang-jwt/jwt/v5"
 )
 

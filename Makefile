@@ -1,10 +1,11 @@
 .PHONY: build run test
 
 build: test
-	go build -o bin/trakt .
+	mkdir -p bin
+	go build -o bin/ ./cmd/*
 
-run: test
-	go run .
+run: test build
+	./bin/trakt
 
 test:
 	go test ./...

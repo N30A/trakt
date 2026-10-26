@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/N30A/trakt/device"
+	"github.com/N30A/trakt/internal/device"
 )
 
 type deviceHandler struct {
@@ -18,6 +18,12 @@ type deviceHandler struct {
 
 func newDeviceHandler(repo *device.DeviceRepo) *deviceHandler {
 	return &deviceHandler{repo: repo}
+}
+
+type deviceResponse struct {
+	ID       int    `json:"id"`
+	UniqueID string `json:"unique_id"`
+	Name     string `json:"name"`
 }
 
 func (h *deviceHandler) getDevices(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +83,11 @@ func (h *deviceHandler) getDevice(w http.ResponseWriter, r *http.Request) {
 
 const maxDeviceNameRunes = 100
 
+type createDeviceRequest struct {
+	UniqueID string `json:"unique_id"`
+	Name     string `json:"name"`
+}
+
 func (h *deviceHandler) createDevice(w http.ResponseWriter, r *http.Request) {
 	request, err := decodeJSON[createDeviceRequest](r)
 	if err != nil {
@@ -114,6 +125,11 @@ func (h *deviceHandler) createDevice(w http.ResponseWriter, r *http.Request) {
 		UniqueID: dev.UniqueID,
 		Name:     dev.Name,
 	})
+}
+
+type updateDeviceRequest struct {
+	UniqueID string `json:"unique_id"`
+	Name     string `json:"name"`
 }
 
 func (h *deviceHandler) updateDevice(w http.ResponseWriter, r *http.Request) {

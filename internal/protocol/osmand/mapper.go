@@ -3,7 +3,7 @@ package osmand
 import (
 	"time"
 
-	"github.com/N30A/trakt/position"
+	"github.com/N30A/trakt/internal/position"
 )
 
 func toPositionInput(pos osmandPosition, serverTime time.Time) position.PositionInput {
